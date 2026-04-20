@@ -1,0 +1,47 @@
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Editors
+.idea/
+.vscode/
+
+# Build outputs
+dist/
+build/
+output/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Playwright MCP runtime artifacts
+.playwright-mcp/
+playwright-report/
+test-results/
+
+# Local logs / traces
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code local overrides
+.claude/settings.local.json
+
+# TS build cache
+*.tsbuildinfo
+

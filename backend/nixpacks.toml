@@ -1,0 +1,23 @@
+# Nixpacks build config for Railway.
+# We need BOTH Python (FastAPI server) AND Node (npx @playwright/mcp).
+# Without nodejs in nixPkgs, the v2 MCP browser phase will fail with
+# "npx: command not found".
+
+[phases.setup]
+nixPkgs = ["python311", "nodejs_20", "gcc"]
+
+[phases.install]
+cmds = [
+  "python -m venv /opt/venv",
+  ". /opt/venv/bin/activate && pip install --upgrade pip",
+  ". /opt/venv/bin/activate && pip install -r requirements.txt",
+  # Pre-warm the @playwright/mcp package so first request isn't slow.
+  "npx -y @playwright/mcp@latest --version || true",
+]
+
+[start]
+cmd = ". /opt/venv/bin/activate && python -m uvicorn server_v2:app --host 0.0.0.0 --port ${PORT:-8001}"
+
+[variables]
+PYTHONUNBUFFERED = "1"
+PYTHONIOENCODING = "utf-8"

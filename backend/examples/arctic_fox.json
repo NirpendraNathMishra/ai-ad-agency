@@ -1,0 +1,19 @@
+{
+  "business_name": "Arctic Fox",
+  "website": "https://thearcticfox.com",
+  "industry": "D2C bags and accessories (backpacks, sling bags, laptop bags, wallets, travel gear)",
+  "product_description": "Indian D2C bags brand making anti-theft + waterproof backpacks, sling bags, laptop bags, tote bags, and accessories in vegan leather. Known for design-forward aesthetics, pastel + bold colorways, and practical features like rain covers, USB charging ports, and RFID-safe compartments. Price range ₹999–₹4,999. Sold via D2C website, Amazon, Flipkart, Myntra, and growing offline pop-ups. Target: college students, young professionals, travelers.",
+  "target_audience": "Urban and semi-urban Indians aged 18-32. College students, young working professionals, creators, and travelers. They value design, utility, and social-media-worthy aesthetics. Compare on looks, feature-per-rupee, and brand voice. Gen Z + younger millennials who follow fashion/travel creators on Instagram and YouTube. Willing to pay ₹1,500-₹3,500 for a bag that feels premium without the Fjallraven / Herschel price tag.",
+  "unique_selling_points": [
+    "Design-forward aesthetics — pastel + bold colorways competitors don't do",
+    "Practical features built in (rain cover, USB port, RFID safe, anti-theft back pocket)",
+    "Vegan-leather and sustainable-material messaging",
+    "Premium-looking bags at a fraction of Fjallraven / Herschel price",
+    "Strong Instagram + creator community presence"
+  ],
+  "monthly_ad_budget_inr": 800000,
+  "primary_goal": "sales",
+  "competitor_names": ["Wildcraft", "American Tourister", "Skybags (VIP)", "Mokobara", "Uppercase"],
+  "geography": "India — tier 1 + tier 2 urban",
+  "focus_product": "The newest Arctic Fox flagship backpack / sling released in 2026 — identify the exact SKU via web_search ('Arctic Fox new backpack 2026', 'Arctic Fox latest launch 2026'), Instagram, and thearcticfox.com new-arrivals. Build the campaign around THIS specific SKU. If nothing from 2026 is verifiable, fall back to the newest identifiable hero SKU and state the assumption."
+}

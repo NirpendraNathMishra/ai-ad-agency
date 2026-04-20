@@ -1,0 +1,18 @@
+{
+  "business_name": "Sharma Classes",
+  "website": null,
+  "industry": "Local tuition / coaching center",
+  "product_description": "Offline coaching for CBSE Classes 9-12 — Maths, Physics, Chemistry. Small batches of max 15 students. Run by a single teacher (Mr. Sharma, 14 years experience, ex-FIITJEE). Operating from a 2-room setup in Sector 62, Noida. Monthly fee: ₹3,500 per subject, ₹8,000 for all three.",
+  "target_audience": "Parents of Class 9-12 CBSE students in Noida Sector 50-70 who want focused teaching instead of large coaching factories. Household income ₹10-25 lakh/year. They value small batch size, teacher attention, and proven board results over brand names.",
+  "unique_selling_points": [
+    "Max 15 students per batch — every student gets personal attention",
+    "Ex-FIITJEE teacher with 14 years experience",
+    "100% of last year's batch scored above 85% in boards",
+    "Doubt-clearing over WhatsApp even after class hours",
+    "Monthly parent-teacher meetings"
+  ],
+  "monthly_ad_budget_inr": 20000,
+  "primary_goal": "leads",
+  "competitor_names": ["FIITJEE", "Aakash Institute", "Vidyamandir"],
+  "geography": "Noida, Delhi NCR"
+}

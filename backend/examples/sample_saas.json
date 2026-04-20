@@ -1,0 +1,18 @@
+{
+  "business_name": "RasoiOps",
+  "website": null,
+  "industry": "B2B SaaS — restaurant inventory management",
+  "product_description": "Cloud-based inventory and recipe-costing software for independent restaurants and small cloud kitchen chains (1-10 outlets). Tracks raw material consumption in real-time, flags wastage, and shows exact cost per dish so owners know their actual margins. Pricing: ₹2,500/outlet/month. Free 14-day trial, no card required.",
+  "target_audience": "Restaurant owners and F&B entrepreneurs aged 28-45 in tier-1 and tier-2 Indian cities running 1-10 outlets. They track inventory on Excel/WhatsApp today, know they are leaking 8-15% to wastage, and want to scale without hiring more managers. Tech-comfortable but not tech-first.",
+  "unique_selling_points": [
+    "Setup in 30 minutes — no consultant needed",
+    "WhatsApp alerts for low stock and wastage spikes",
+    "Works offline, syncs when back online (power cut friendly)",
+    "Built-in GST invoicing for suppliers",
+    "Only SaaS with Hindi + English dual interface"
+  ],
+  "monthly_ad_budget_inr": 40000,
+  "primary_goal": "leads",
+  "competitor_names": ["Petpooja", "Posist", "Restroworks"],
+  "geography": "India"
+}

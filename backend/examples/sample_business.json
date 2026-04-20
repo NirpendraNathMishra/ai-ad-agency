@@ -1,0 +1,17 @@
+{
+  "business_name": "Kairaa Organics",
+  "website": "https://example.com",
+  "industry": "D2C organic skincare",
+  "product_description": "Handmade cold-pressed face oils and natural lip balms. Sourced from small farms in Kerala, delivered pan-India. 3-product range, starting at ₹450.",
+  "target_audience": "Women aged 25-40 in metros (Mumbai, Bangalore, Delhi NCR, Pune) who read ingredient labels, prefer natural/Ayurvedic products, and are willing to pay 2-3x mass-market prices for quality.",
+  "unique_selling_points": [
+    "Single-origin, cold-pressed in small batches",
+    "Zero synthetic preservatives (refrigerate after opening)",
+    "Every bottle is traceable to the farm and harvest date",
+    "Direct from Kerala — no middleman markup"
+  ],
+  "monthly_ad_budget_inr": 60000,
+  "primary_goal": "sales",
+  "competitor_names": ["Forest Essentials", "Kama Ayurveda", "Juicy Chemistry"],
+  "geography": "India"
+}
