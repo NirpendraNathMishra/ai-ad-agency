@@ -32,6 +32,7 @@ from app.agents.strategy import run_strategy_agent
 from app.config import config
 from app.report import render_markdown
 from app.schemas import BusinessInput, FullReport
+from app.storage import mongo
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -71,11 +72,16 @@ def _timestamp() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+_PERSIST_V1_TYPES = {"stage_done", "run_done", "run_error"}
+
+
 def _push_event(state: RunState, loop: asyncio.AbstractEventLoop, event: dict) -> None:
     stamped = {"ts": _timestamp(), **event}
     state.events.append(stamped)
     for q in list(state.subscribers):
         loop.call_soon_threadsafe(q.put_nowait, stamped)
+    if stamped.get("type") in _PERSIST_V1_TYPES:
+        asyncio.run_coroutine_threadsafe(mongo.save_run_v1(state), loop)
 
 
 def _run_pipeline(state: RunState, loop: asyncio.AbstractEventLoop) -> None:
@@ -173,6 +179,7 @@ async def create_run(business: BusinessInput) -> dict:
     run_id = uuid.uuid4().hex[:12]
     state = RunState(run_id=run_id, business=business)
     RUNS[run_id] = state
+    await mongo.save_run_v1(state)
 
     loop = asyncio.get_running_loop()
     asyncio.create_task(asyncio.to_thread(_run_pipeline, state, loop))

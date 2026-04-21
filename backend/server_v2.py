@@ -50,6 +50,7 @@ from app.agents.strategy import run_strategy_agent
 from app.config import config
 from app.report import render_markdown
 from app.schemas import BusinessInput, FullReport
+from app.storage import mongo
 from app.tools.browser_mcp import run_mcp_browser_search
 from app.tools.meta_ad_library import search_meta_ads
 from app.tools.web_mcp import format_context_for_agent, mcp_prefetch_context
@@ -249,6 +250,9 @@ def _run_research_with_context(
     return _research_parse_output(raw_output)
 
 
+_PERSIST_V2_TYPES = {"stage_done", "run_done", "run_error"}
+
+
 async def _run_full_pipeline(state: RunV2State) -> None:
     loop = asyncio.get_running_loop()
 
@@ -257,12 +261,16 @@ async def _run_full_pipeline(state: RunV2State) -> None:
         state.events.append(stamped)
         for q in list(state.subscribers):
             loop.call_soon_threadsafe(q.put_nowait, stamped)
+        if stamped.get("type") in _PERSIST_V2_TYPES:
+            asyncio.run_coroutine_threadsafe(mongo.save_run_v2(state), loop)
 
     async def emit_async(event: dict) -> None:
         stamped = {"ts": _ts(), **event}
         state.events.append(stamped)
         for q in list(state.subscribers):
             q.put_nowait(stamped)
+        if stamped.get("type") in _PERSIST_V2_TYPES:
+            await mongo.save_run_v2(state)
 
     try:
         state.status = "running"
@@ -376,6 +384,7 @@ async def create_run_v2(business: BusinessInput) -> dict:
     run_id = uuid.uuid4().hex[:12]
     state = RunV2State(run_id=run_id, business=business)
     RUNS_V2[run_id] = state
+    await mongo.save_run_v2(state)
     asyncio.create_task(_run_full_pipeline(state))
     return {"run_id": run_id, "status": state.status, "created_at": state.created_at}
 
