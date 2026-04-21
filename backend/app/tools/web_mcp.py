@@ -185,7 +185,14 @@ async def mcp_prefetch_context(
 
     server_params = StdioServerParameters(
         command="npx",
-        args=["-y", "@playwright/mcp@latest", "--headless", "--isolated"],
+        args=[
+            "-y",
+            "@playwright/mcp@latest",
+            "--headless",
+            "--isolated",
+            "--browser",
+            "chromium",
+        ],
     )
 
     await _emit(
@@ -283,27 +290,72 @@ async def mcp_prefetch_context(
                         "description": "JPEG, above-the-fold",
                     },
                 )
-                try:
+                async def _try_shot(args: dict) -> tuple[bool, list[str]]:
+                    """Try a screenshot call. Return (emitted?, debug_shapes)."""
                     shot_result = await session.call_tool(
-                        "browser_take_screenshot",
-                        {"type": "jpeg", "fullPage": False},
+                        "browser_take_screenshot", args
                     )
-                    for content in shot_result.content:
-                        if getattr(content, "type", None) == "image":
-                            b64 = getattr(content, "data", "") or ""
-                            mime = getattr(content, "mimeType", "image/jpeg") or "image/jpeg"
-                            if b64:
-                                await _emit(
-                                    emit,
-                                    {
-                                        "type": "mcp_screenshot",
-                                        "b64": b64,
-                                        "mime": mime,
-                                        "label": f"{brand} — {role}",
-                                        "url": url,
-                                        "step": step,
-                                    },
+                    shapes: list[str] = []
+                    for content in shot_result.content or []:
+                        ctype = getattr(content, "type", None)
+                        b64 = getattr(content, "data", "") or ""
+                        mime = getattr(content, "mimeType", "") or ""
+                        if not b64:
+                            resource = getattr(content, "resource", None)
+                            if resource is not None:
+                                b64 = (
+                                    getattr(resource, "blob", "")
+                                    or getattr(resource, "data", "")
+                                    or ""
                                 )
+                                mime = getattr(resource, "mimeType", "") or mime
+                        text_preview = ""
+                        if ctype == "text":
+                            text_preview = (getattr(content, "text", "") or "")[:200]
+                        if not mime:
+                            mime = "image/jpeg"
+                        shapes.append(
+                            f"type={ctype} mime={mime} b64={len(b64) if b64 else 0}"
+                            + (f" text={text_preview!r}" if text_preview else "")
+                        )
+                        if b64 and (ctype == "image" or "image/" in mime):
+                            await _emit(
+                                emit,
+                                {
+                                    "type": "mcp_screenshot",
+                                    "b64": b64,
+                                    "mime": mime,
+                                    "label": f"{brand} — {role}",
+                                    "url": url,
+                                    "step": step,
+                                },
+                            )
+                            return True, shapes
+                    return False, shapes
+
+                try:
+                    emitted_shot, debug_shapes = await _try_shot(
+                        {"type": "jpeg", "fullPage": False}
+                    )
+                    if not emitted_shot:
+                        # Retry with raw=true — some @playwright/mcp versions require this
+                        emitted_shot2, debug_shapes2 = await _try_shot(
+                            {"type": "png", "fullPage": False, "raw": True}
+                        )
+                        debug_shapes = debug_shapes + ["---retry---"] + debug_shapes2
+                        emitted_shot = emitted_shot2
+                    if not emitted_shot:
+                        await _emit(
+                            emit,
+                            {
+                                "type": "mcp_tool_call",
+                                "tool": "browser_take_screenshot",
+                                "args": {
+                                    "warning": "no image content found",
+                                    "shapes": debug_shapes[:10],
+                                },
+                            },
+                        )
                 except Exception as e:
                     await _emit(
                         emit,

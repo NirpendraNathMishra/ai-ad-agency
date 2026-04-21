@@ -34,5 +34,23 @@ async def _startup_mongo() -> None:
         n1 = await mongo.load_v1_runs(v1_mod.RunState, BusinessInput, v1_mod.RUNS)
         n2 = await mongo.load_v2_runs(v2_mod.RunV2State, BusinessInput, v2_mod.RUNS_V2)
         print(f"[startup] loaded from mongo: v1={n1}, v2={n2}")
+        # Any "running" run loaded from mongo was interrupted by the previous
+        # container's exit — its asyncio task doesn't survive a restart. Mark
+        # it errored so the UI stops showing a live spinner forever.
+        i1 = await _sweep_stale_running(v1_mod.RUNS, mongo.save_run_v1)
+        i2 = await _sweep_stale_running(v2_mod.RUNS_V2, mongo.save_run_v2)
+        if i1 or i2:
+            print(f"[startup] marked interrupted: v1={i1}, v2={i2}")
+
+
+async def _sweep_stale_running(runs: dict, save_fn) -> int:
+    n = 0
+    for state in runs.values():
+        if state.status == "running" or state.status == "pending":
+            state.status = "error"
+            state.error = "interrupted (container restart before pipeline completed)"
+            await save_fn(state)
+            n += 1
+    return n
 
 app = app_v2

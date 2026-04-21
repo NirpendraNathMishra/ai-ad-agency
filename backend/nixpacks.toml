@@ -13,6 +13,9 @@ cmds = [
   ". /opt/venv/bin/activate && pip install -r requirements.txt",
   # Pre-warm the @playwright/mcp package so first request isn't slow.
   "npx -y @playwright/mcp@latest --version || true",
+  # Install Playwright Chromium + OS deps — @playwright/mcp needs a browser binary.
+  # Without this, screenshots fail with: Chromium distribution 'chrome' is not found.
+  "npx -y playwright@latest install --with-deps chromium",
 ]
 
 [start]

@@ -35,6 +35,7 @@ import type {
   StrategyData,
   CreativeData,
 } from "@/lib/types";
+import { listRunsV2, type RunListItemV2 } from "@/lib/api";
 
 const V2_API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_V2 ?? "http://localhost:8001";
@@ -138,8 +139,83 @@ export default function V2DashboardPage() {
   const [strategyData, setStrategyData] = useState<StrategyData | null>(null);
   const [creativeData, setCreativeData] = useState<CreativeData | null>(null);
   const [finalMarkdown, setFinalMarkdown] = useState<string | null>(null);
+  const [allRuns, setAllRuns] = useState<RunListItemV2[]>([]);
 
   const socketRef = useRef<WebSocket | null>(null);
+
+  async function refreshRuns() {
+    try {
+      const runs = await listRunsV2();
+      setAllRuns(runs);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  useEffect(() => {
+    refreshRuns();
+    const t = setInterval(refreshRuns, 5000);
+    return () => clearInterval(t);
+  }, []);
+
+  async function loadPastRun(id: string) {
+    try {
+      socketRef.current?.close();
+      const res = await fetch(`${V2_API_BASE}/api/v2/runs/${id}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const evs = ((data.events as AnyEvent[]) || []).slice();
+
+      setEvents(evs);
+      setScreenshots(
+        evs.filter((e) => e.type === "mcp_screenshot") as McpScreenshotEvent[],
+      );
+      setMcpResults(
+        evs.filter((e) => e.type === "mcp_result") as McpResultEvent[],
+      );
+      const lastStep = [...evs]
+        .reverse()
+        .find((e) => e.type === "mcp_step") as McpStepEvent | undefined;
+      setCurrentMcpStep(lastStep ?? null);
+
+      const stages: Record<Stage, StageStatus> = {
+        mcp_browse: evs.some((e) => e.type === "mcp_step") ? "done" : "idle",
+        research: "idle",
+        strategy: "idle",
+        creative: "idle",
+      };
+      for (const ev of evs) {
+        const stage = ev.stage as Stage | undefined;
+        if (!stage) continue;
+        if (ev.type === "stage_done") stages[stage] = "done";
+        else if (ev.type === "stage_start" && stages[stage] !== "done")
+          stages[stage] = "running";
+      }
+      setStageStatus(stages);
+
+      const resDone = evs.find(
+        (e) => e.type === "stage_done" && e.stage === "research",
+      );
+      if (resDone?.data) setResearchData(resDone.data as ResearchData);
+      const stratDone = evs.find(
+        (e) => e.type === "stage_done" && e.stage === "strategy",
+      );
+      if (stratDone?.data) setStrategyData(stratDone.data as StrategyData);
+      const crDone = evs.find(
+        (e) => e.type === "stage_done" && e.stage === "creative",
+      );
+      if (crDone?.data) setCreativeData(crDone.data as CreativeData);
+
+      setFinalMarkdown((data.final_markdown as string) || null);
+      if (data.business) setBrief(data.business as BusinessInput);
+      setRunId(id);
+      const s = data.status as string;
+      setStatus(s === "done" ? "done" : s === "error" ? "error" : "running");
+      setError((data.error as string) || null);
+    } catch {
+      /* ignore */
+    }
+  }
 
   useEffect(() => {
     if (!runId) return;
@@ -246,11 +322,18 @@ export default function V2DashboardPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20, scale: 0.98 }}
                 transition={{ duration: 0.35 }}
+                className="space-y-6"
               >
                 <BriefFormCentered
                   brief={brief}
                   setBrief={setBrief}
                   onStart={handleStart}
+                />
+                <RunsListV2
+                  runs={allRuns}
+                  currentRunId={runId}
+                  onRefresh={refreshRuns}
+                  onSelect={loadPastRun}
                 />
               </motion.div>
             )}
@@ -1288,6 +1371,85 @@ function Card({ label, children }: { label: string; children: React.ReactNode })
     <div className="rounded-lg border border-white/10 bg-black/40 p-3">
       <div className="text-[10px] uppercase tracking-wider text-white/50 mb-1.5">{label}</div>
       <div className="text-sm text-white/80">{children}</div>
+    </div>
+  );
+}
+
+function RunsListV2({
+  runs,
+  currentRunId,
+  onRefresh,
+  onSelect,
+}: {
+  runs: RunListItemV2[];
+  currentRunId: string | null;
+  onRefresh: () => void;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-white/40">
+          <Activity className="w-3.5 h-3.5" /> past runs
+          <span className="text-white/30 font-mono normal-case tracking-normal">
+            ({runs.length})
+          </span>
+        </div>
+        <button
+          onClick={onRefresh}
+          className="text-white/40 hover:text-white transition"
+          title="Refresh"
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {runs.length === 0 ? (
+        <div className="text-xs text-white/30 py-2">no runs yet</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[340px] overflow-y-auto pr-1">
+          {runs.map((r) => {
+            const active = r.run_id === currentRunId;
+            const dot =
+              r.status === "running"
+                ? "bg-amber-400 animate-pulse"
+                : r.status === "done"
+                ? "bg-emerald-400"
+                : r.status === "error"
+                ? "bg-red-400"
+                : "bg-white/30";
+            return (
+              <button
+                key={r.run_id}
+                onClick={() => onSelect(r.run_id)}
+                className={`text-left flex items-center justify-between gap-2 px-3 py-2 rounded-lg border transition ${
+                  active
+                    ? "border-white/25 bg-white/[0.05]"
+                    : "border-white/10 bg-white/[0.02] hover:border-white/20"
+                }`}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
+                    <div className="text-sm text-white/85 truncate">
+                      {r.business_name}
+                    </div>
+                    {r.has_report && (
+                      <CheckCircle2 className="w-3 h-3 text-emerald-300/80 shrink-0" />
+                    )}
+                  </div>
+                  <div className="font-mono text-[10px] text-white/40 mt-0.5 truncate">
+                    {r.run_id} · {new Date(r.created_at).toLocaleString()}
+                  </div>
+                </div>
+                <span className="text-[10px] font-mono text-white/40 shrink-0">
+                  {r.event_count}ev
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
